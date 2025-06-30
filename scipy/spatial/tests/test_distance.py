@@ -1479,6 +1479,21 @@ class TestPdist:
         # test that output is numerically equivalent
         assert_allclose(Y1, Y2, rtol=eps, verbose=verbose > 2)
 
+    def test_pdist_invalid_dimensionality(self):
+            # Test with a one-dimensional array
+            one_d_array = np.array([1, 2, 3])
+            with pytest.raises(ValueError) as excinfo:
+                pdist(one_d_array)
+            assert str(excinfo.value) == \
+                'A 2-dimensional array must be passed. (Shape was (3,)).'
+
+            # Test with a three-dimensional array
+            three_d_array = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+            with pytest.raises(ValueError) as excinfo:
+                pdist(three_d_array)
+            assert str(excinfo.value) == \
+                'A 2-dimensional array must be passed. (Shape was (2, 2, 2)).'
+
 class TestSomeDistanceFunctions:
 
     def setup_method(self):
