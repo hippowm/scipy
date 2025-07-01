@@ -2250,6 +2250,24 @@ class _TestLinearFilter:
         check_dtype_arg = {} if self.dtype == object else {'check_dtype': False}
         self.assert_equal(zi, zi_2, **check_dtype_arg)
 
+    @pytest.mark.parametrize('x, y, a', [
+        (np.array([1, 2]), np.array([1]), [1]),  # x is shorter than M
+        (np.array([1]), np.array([1, 2]), [1]),  # y is shorter than N
+    ])
+    def test_lfiltic_short_arrays(self, x, y, a):
+        b = np.array([0.5, 1.0, 0.2])  # arbitrary b
+        zi = lfiltic(b, a, y, x)
+        assert zi is not None  # simple check to validate output
+    
+    @pytest.mark.parametrize('a', (1, [1], [1, .5, 1.5], 2, [2], [2, 1, 3]), ids=str)
+    def test_lfiltic_short_input(self, a):
+        # Additional test to cover the case where len(x) < len(b)
+        x = [1]  # Input array shorter than coefficients in b
+        b = [0.5, 1.0, 0.2]  # Coefficients for b
+        a = [1] if isinstance(a, int) else a
+        zi = lfiltic(b, a, x)
+        assert len(zi) == len(b) - 1
+
     @skip_xp_backends('cupy', reason='XXX https://github.com/cupy/cupy/pull/8677')
     def test_short_x_FIR(self, xp):
         # regression test for #5116
@@ -2875,25 +2893,6 @@ class TestLFilterZI:
         b = xp.zeros((8), dtype=dtype)
         a = xp.asarray([1], dtype=dtype)
         assert signal.lfilter_zi(b, a).dtype == dtype
-
-    @pytest.mark.parametrize('x, y, a', [
-        (np.array([1, 2]), np.array([1]), [1]),  # x is shorter than M
-        (np.array([1]), np.array([1, 2]), [1]),  # y is shorter than N
-    ])
-    def test_lfiltic_short_arrays(self, x, y, a):
-        b = np.array([0.5, 1.0, 0.2])  # arbitrary b
-        zi = lfiltic(b, a, y, x)
-        assert zi is not None  # simple check to validate output
-    
-    @pytest.mark.parametrize('a', (1, [1], [1, .5, 1.5], 2, [2], [2, 1, 3]), ids=str)
-    def test_lfiltic_short_input(self, a):
-        # Additional test to cover the case where len(x) < len(b)
-        x = [1]  # Input array shorter than coefficients in b
-        b = [0.5, 1.0, 0.2]  # Coefficients for b
-        a = [1] if isinstance(a, int) else a
-        zi = lfiltic(b, a, x)
-        assert len(zi) == len(b) - 1
-
 
 @skip_xp_backends(cpu_only=True, exceptions=['cupy'])
 class TestFiltFilt:
